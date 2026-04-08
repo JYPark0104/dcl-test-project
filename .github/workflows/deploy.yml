@@ -1,0 +1,28 @@
+name: Upload to AWS S3
+
+# main 브랜치에 코드가 push 될 때마다 이 로봇이 자동으로 실행됩니다.
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest # 로봇이 작업할 가상의 우분투 컴퓨터
+
+    steps:
+    - name: 1. GitHub에서 최신 코드 가져오기
+      uses: actions/checkout@v3
+
+    - name: 2. 코드를 zip 파일로 압축하기 (.git 폴더 제외)
+      run: zip -r deploy-package.zip ./* -x ".git/*"
+
+    - name: 3. AWS 출입증 인증하기 (아까 등록한 Secrets 사용)
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    - name: 4. S3 물류 창고로 압축 파일 쏘아 올리기!
+      run: aws s3 cp deploy-package.zip s3://park-yonsei-awscloud-test/deploy-package.zip
